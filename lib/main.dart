@@ -77,8 +77,7 @@ class Category {
 
   factory Category.fromJson(Map json) {
     debugPrint('$json');
-    return Category(
-        id: json['userId'], title: json['name'], image: json['image']);
+    return Category(id: json['userId'], title: json['name'], image: json['image']);
   }
 }
 
