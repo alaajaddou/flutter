@@ -76,8 +76,12 @@ class Category {
   }
 
   factory Category.fromJson(Map json) {
-    debugPrint('$json');
-    return Category(id: json['userId'], title: json['name'], image: json['image']);
+    return Category(
+        id: json['userId'],
+        title: json['name'],
+        image: json['image']
+            ? 'http://wooow-super.com/storage/${json['image']}'
+            : null);
   }
 }
 
@@ -88,32 +92,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    categories = _fetchCategories();
   }
 
-  _fetchCategories() {
+  _fetchCategories() async {
     final url = 'https://wooow-super.com/api/categories';
-    http.get(url).then((response) {
-      setState(() {
-        List list = jsonDecode(response.body)['categories'];
-        categories = list.map((model) => Category.fromJson(model)).toList();
-        debugPrint('$categories');
-      });
+    final response = await http.get(url);
+    setState(() {
+      categories = jsonDecode(response.body)['categories'];
     });
-    // final response = await http.get('https://wooow-super.com/api/categories');
-    // if (response.statusCode == 200) {
-    //   // If the server did return a 200 OK response,
-    //   // then parse the JSON.
-    //
-    //   return Category.fromJson(response.body['categories']);
-    // } else {
-    //   // If the server did not return a 200 OK response,
-    //   // then throw an exception.
-    //   throw Exception('Failed to load album');
-    // }
   }
 
-  getSmallCategoriesList() {
+  List<Widget> getSmallCategoriesList() {
     List<Widget> widgets = [];
     for (var i = 0; i < categories.length; i++) {
       widgets.add(Container(
@@ -133,11 +122,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 shape: BoxShape.circle,
                 image: DecorationImage(
-                    image: NetworkImage(categories[i].image != null ? categories[i].image : 'https://via.placeholder.com/150x150'),
+                    image: NetworkImage('http://wooow-super.com/storage/${categories[i]['image']}'),
                     fit: BoxFit.fill),
               ),
             ),
-            Text(categories[i].title != null ? categories[i].title : 'none')
+            Text(categories[i]['name'] != null ? categories[i]['name'] : 'none')
           ],
         ),
       ));
@@ -158,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int _selectedIndex = 0;
   static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.amber);
+  TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.amber);
   static const List<Widget> _widgetOptions = <Widget>[
     Text(
       'Index 0: Home',
@@ -201,6 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
     showAccount() => {};
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.orange[800],
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
@@ -217,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // arranges them vertically. By default, it sizes itself to fit its
           // children horizontally, and tries to be as tall as its parent.
           //
-          // Invoke "debug painting" (press "p" in the console, choose the
+          // Invoke "debugdebug painting" (press "p" in the console, choose the
           // "Toggle Debug Paint" action from the Flutter Inspector in Android
           // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
           // to see the wireframe for each widget.
@@ -231,21 +221,33 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Container(
               margin: const EdgeInsets.all(5.0),
-              color: Theme.of(context).primaryColor,
+              color: Theme
+                  .of(context)
+                  .primaryColor,
               child: FadeInImage.memoryNetwork(
                 placeholder: kTransparentImage,
-                image: 'https://picsum.photos/250?image=9',
-                height: 140,
+                image:
+                'https://www.indiacreatives.in/images/image_services/Banner-Designing-Services1.jpg',
+                fit: BoxFit.fill,
                 width: double.infinity,
               ),
             ),
             Container(
-              width: double.infinity,
-              height: 100,
-              child: ListView(
-                  // This next line does the trick.
-                  scrollDirection: Axis.horizontal,
-                  children: getSmallCategoriesList()),
+                width: double.infinity,
+                height: 100,
+
+                child: FutureBuilder<dynamic>(
+                    future: _fetchCategories(),
+                    // a previously-obtained Future<String> or null
+                    builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+                      List<Widget> children = getSmallCategoriesList();
+                      return ListView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true,
+                        children: children,
+                      );
+                    }
+                )
             )
           ],
         ),
